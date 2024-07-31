@@ -118,29 +118,19 @@
     }
 
     function displayMessage(sender, message) {
-      const messageElement = document.createElement('div');
-      messageElement.classList.add('message');
-      messageElement.innerText = message;
-      if (sender === 'user') {
-        messageElement.classList.add('user-message');
-      } else {
-        messageElement.classList.add('bot-message');
-      }
-      chatMessages.appendChild(messageElement);
-      chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
-    }
+  const messageElement = document.createElement('div');
+  messageElement.classList.add('message');
+  messageElement.innerText = message;
+  if (sender === 'user') {
+    messageElement.classList.add('user-message');
+  } else {
+    messageElement.classList.add('bot-message');
+  }
+  chatMessages.appendChild(messageElement);
+  chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+}
 
-    firebase.database().ref('messages').orderByChild('timestamp').on('child_added', function(snapshot) {
-      const messageData = snapshot.val();
-      displayMessage(messageData.sender, messageData.message);
-    });
-
-    firebase.database().ref('messages').on('child_added', function(snapshot) {
-      const messageData = snapshot.val();
-      if (messageData.sender !== 'user') {
-        displayMessage(messageData.sender, messageData.message);
-      }
-    });
-  </script>
-</body>
-</html>
+firebase.database().ref('messages').orderByChild('timestamp').on('child_added', function(snapshot) {
+  const messageData = snapshot.val();
+  displayMessage(messageData.sender, messageData.message);
+});
