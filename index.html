@@ -1,146 +1,393 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real-time Chatbot</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
-              integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">              
-              <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Real-time Chatbot with Google Auth</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background-image: url('wp.jpg'); 
+    body {
+      background: url('wp.jpg') no-repeat center center fixed;
       background-size: cover;
-      background-repeat: no-repeat;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      background-color: #121212;
+      position: relative;
     }
 
     #chat-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      background: rgba(255 255 255 / 0.15);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
       width: 400px;
-      background-color: rgba(255, 255, 255, 0.8); 
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      overflow-y: auto; 
-      max-height: 80%; 
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255 255 255 / 0.18);
+      color: white;
     }
 
     #chat-messages {
-      padding: 20px;
+      flex: 1;
+      padding: 24px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+    #chat-messages::-webkit-scrollbar {
+      width: 8px;
+    }
+    #chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #chat-messages::-webkit-scrollbar-thumb {
+      background-color: rgba(255 255 255 / 0.3);
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+    #chat-messages:hover::-webkit-scrollbar-thumb {
+      background-color: rgba(255 255 255 / 0.6);
+    }
+
+    /* Message container flex side-by-side */
+    .message-wrapper {
+      display: flex;
+      max-width: 100%;
+      animation: fadeInUp 0.3s forwards;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .message-wrapper.user {
+      justify-content: flex-end;
+    }
+    .message-wrapper.bot {
+      justify-content: flex-start;
     }
 
     .message {
-      margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 5px;
+      max-width: 70%;
+      padding: 14px 18px;
+      border-radius: 24px;
+      font-size: 15px;
+      line-height: 1.3;
       word-wrap: break-word;
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+      position: relative;
+      color: #111;
     }
-
     .user-message {
-      background-color: #DCF8C6;
-      align-self: flex-end; 
+      background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 8px 15px rgb(120 255 214 / 0.4);
+      color: #064e3b;
     }
-
     .bot-message {
-      background-color: #E3F2FD;
+      background: linear-gradient(135deg, #90caf9 0%, #42a5f5 100%);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 8px 15px rgb(66 165 245 / 0.4);
+      color: #0d47a1;
     }
 
-    input[type="text"] {
-      width: calc(100% - 70px);
-      padding: 8px;
-      margin-right: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    /* Input area with separate boxes */
+    #input-area {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+      background: rgba(255 255 255 / 0.2);
+      border-top: 1px solid rgba(255 255 255 / 0.18);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      outline: none;
+      background: rgba(255 255 255 / 0.3);
+      color: #111;
+      box-shadow: inset 0 0 10px rgb(255 255 255 / 0.25);
+      transition: background-color 0.3s ease;
+    }
+    #user-input::placeholder {
+      color: rgba(17 17 17 / 0.5);
+    }
+    #user-input:focus {
+      background: rgba(255 255 255 / 0.5);
+      box-shadow: inset 0 0 15px rgb(255 255 255 / 0.7);
     }
 
     button {
-      padding: 7px 15px;
-      background-color: #007bff;
-      color: #fff;
+      width: 60px;
+      border-radius: 16px;
+      background: #0284c7;
       border: none;
-      border-radius: 5px;
+      color: white;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 12px rgb(2 132 199 / 0.5);
+      padding: 0;
     }
-
     button:hover {
-      background-color: #0056b3;
+      background: #0369a1;
+      box-shadow: 0 6px 20px rgb(3 105 161 / 0.8);
     }
-    @media screen and (max-width: 600px) {
-      #chat-container {
-        width: 90%;
-      }
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 3px 10px rgb(3 105 161 / 0.9);
+    }
 
+    .material-icons {
+      font-size: 28px;
+      user-select: none;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Login button */
+    #login-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+    #login-button {
+      background: #4285F4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgb(66 133 244 / 0.6);
+      transition: background-color 0.3s ease;
+    }
+    #login-button:hover {
+      background: #357ae8;
+    }
+
+    #user-info {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      user-select: none;
+    }
+    #user-info img {
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+    }
+    #logout-button {
+      margin-left: 12px;
+      background: transparent;
+      border: 1px solid white;
+      border-radius: 9999px;
+      color: white;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    #logout-button:hover {
+      background: white;
+      color: #121212;
     }
   </style>
 </head>
 <body>
-  <div id="chat-container">
-    <div id="chat-messages"></div>
-    <input type="text" id="user-input" placeholder="Type your message...">
-    <button onclick="sendMessage()"><i class="material-icons">send</i></button>
+  <!-- Login UI -->
+  <div id="login-container" aria-live="polite">
+    <button id="login-button" aria-label="Sign in with Google">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google logo" width="18" height="18"/>
+      Sign in with Google
+    </button>
+  </div>
+  <!-- User info & logout -->
+  <div id="user-info" hidden>
+    <img id="user-pic" alt="User photo"/>
+    <span id="user-name"></span>
+    <button id="logout-button" aria-label="Logout">Logout</button>
   </div>
 
+  <div id="chat-container" role="main" aria-label="Chat messages container" hidden>
+    <div id="chat-messages" aria-live="polite" aria-relevant="additions"></div>
+    <div id="input-area">
+      <input
+        type="text"
+        id="user-input"
+        placeholder="Type your message..."
+        aria-label="Type your message"
+        autocomplete="off"
+        spellcheck="false"
+        onkeydown="if(event.key === 'Enter'){ sendMessage(); }"
+        disabled
+      />
+      <button onclick="sendMessage()" aria-label="Send message" disabled>
+        <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
   <script>
-    // Initialize Firebase
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBdGIGx54puruMw4oKVR7pmcjh7ExTKAoQ",
-  authDomain: "chatbot-87850.firebaseapp.com",
-  databaseURL: "https://chatbot-87850-default-rtdb.firebaseio.com",
-  projectId: "chatbot-87850",
-  storageBucket: "chatbot-87850.appspot.com",
-  messagingSenderId: "45927714366",
-  appId: "1:45927714366:web:195ebe926cbb190c190b6f",
-  measurementId: "G-TB0190CFBE"
+      authDomain: "chatbot-87850.firebaseapp.com",
+      databaseURL: "https://chatbot-87850-default-rtdb.firebaseio.com",
+      projectId: "chatbot-87850",
+      storageBucket: "chatbot-87850.appspot.com",
+      messagingSenderId: "45927714366",
+      appId: "1:45927714366:web:195ebe926cbb190c190b6f",
+      measurementId: "G-TB0190CFBE"
     };
     firebase.initializeApp(firebaseConfig);
 
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    const loginContainer = document.getElementById('login-container');
+    const loginButton = document.getElementById('login-button');
+    const userInfo = document.getElementById('user-info');
+    const userPic = document.getElementById('user-pic');
+    const userName = document.getElementById('user-name');
+    const logoutButton = document.getElementById('logout-button');
+
+    const chatContainer = document.getElementById('chat-container');
     const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = chatContainer.querySelector('button');
 
-    function sendMessage() {
-      const userInput = document.getElementById('user-input').value.trim();
-      if (userInput !== '') {
-        firebase.database().ref('messages').push({
-          sender: 'user',
-          message: userInput,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-        document.getElementById('user-input').value = '';
-      }
-    }
-    function displayMessage(sender, message) {
-      const messageElement = document.createElement('div');
-      messageElement.classList.add('message');
-      messageElement.innerText = message;
-      if (sender === 'user') {
-        messageElement.classList.add('user-message');
+    // Handle login button click
+    loginButton.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(err => {
+        alert('Login failed: ' + err.message);
+      });
+    });
+
+    // Handle logout button
+    logoutButton.addEventListener('click', () => {
+      auth.signOut();
+    });
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+      if(user) {
+        // Show chat & user info
+        loginContainer.hidden = true;
+        chatContainer.hidden = false;
+        userInfo.hidden = false;
+
+        userPic.src = user.photoURL || '';
+        userName.textContent = user.displayName || user.email;
+
+        userInput.disabled = false;
+        sendButton.disabled = false;
+
+        loadMessages();
       } else {
-        messageElement.classList.add('bot-message');
+        // Hide chat & user info
+        loginContainer.hidden = false;
+        chatContainer.hidden = true;
+        userInfo.hidden = true;
+
+        userInput.disabled = true;
+        sendButton.disabled = true;
+
+        chatMessages.innerHTML = '';
       }
-      chatMessages.appendChild(messageElement);
-      chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+    });
+
+    // Send message function
+    function sendMessage() {
+      const message = userInput.value.trim();
+      if (message === '') return;
+
+      const user = auth.currentUser;
+      if (!user) return alert("Please login first!");
+
+      // Push message with user id and name
+      database.ref('messages').push({
+        sender: 'user',
+        uid: user.uid,
+        username: user.displayName || user.email,
+        message,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      });
+      userInput.value = '';
     }
 
-    firebase.database().ref('messages').orderByChild('timestamp').on('child_added', function(snapshot) {
-      const messageData = snapshot.val();
-      displayMessage(messageData.sender, messageData.message);
-    });
+    // Load and display messages
+    function loadMessages() {
+      // Clear current messages
+      chatMessages.innerHTML = '';
 
-    firebase.database().ref('messages').on('child_added', function(snapshot) {
-      const messageData = snapshot.val();
-      if (messageData.sender !== 'user') {
-        displayMessage(messageData.sender, messageData.message);
+      database.ref('messages').orderByChild('timestamp').limitToLast(100).off(); // Remove previous listeners
+
+      database.ref('messages').orderByChild('timestamp').limitToLast(100).on('child_added', snapshot => {
+        const msg = snapshot.val();
+        displayMessage(msg);
+      });
+    }
+
+    // Display message side-by-side
+    function displayMessage(msg) {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('message-wrapper');
+
+      if (msg.sender === 'user' && msg.uid === auth.currentUser.uid) {
+        wrapper.classList.add('user');
+      } else {
+        wrapper.classList.add('bot');
       }
-    });
 
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message');
+      msgDiv.textContent = msg.message;
+
+      if (msg.sender === 'user' && msg.uid === auth.currentUser.uid) {
+        msgDiv.classList.add('user-message');
+      } else {
+        msgDiv.classList.add('bot-message');
+      }
+
+      wrapper.appendChild(msgDiv);
+      chatMessages.appendChild(wrapper);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   </script>
 </body>
 </html>
